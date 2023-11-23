@@ -4,15 +4,25 @@ using UnityEngine;
 
 public class ShipController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private float life;
+    [SerializeField] private float speedMovement;
+    [SerializeField] private float speedRotation;
+
+    public float SpeedMovement { get { return speedMovement; } }
+    public float SpeedRotation { get { return speedRotation; } }
+
+
+    [SerializeField] private ShipBehavior shipBehavior;
+    private Rigidbody2D shipRigidbody;
+    public Rigidbody2D ShipRigidbody { get { return shipRigidbody; } }
+
+    private void Start()
     {
-        
+        shipRigidbody = GetComponent<Rigidbody2D>();   
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        
+        shipBehavior.Behavior(this);
     }
 }
