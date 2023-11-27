@@ -7,17 +7,18 @@ public class Cannon : MonoBehaviour
     public void Shoot(int damage, GameObject shipGameObject)
     {
         GameObject bulletPoolObj = GameObject.Find("BulletPool");
-
         if (bulletPoolObj)
         {
-            PoolingHandler bulletPool = bulletPoolObj.GetComponent<PoolingHandler>();
-            if (bulletPool) { 
+            PoolingHandler bulletPool;
+            bulletPoolObj.TryGetComponent(out bulletPool);
+            if (bulletPool != null) { 
                 GameObject bullet = bulletPool.GetPooledObject();
                 bullet.transform.position = transform.position;
                 bullet.transform.rotation = transform.rotation;
-                bullet.GetComponent<Bullet>().OriginObj = shipGameObject;
-                bullet.GetComponent<Bullet>().Damage = damage;
 
+                bullet.TryGetComponent(out Bullet bulletInstace);
+                bulletInstace.OriginObj = shipGameObject;
+                bulletInstace.Damage = damage;
                 bullet.SetActive(true);
             }
         }

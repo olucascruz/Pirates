@@ -6,12 +6,12 @@ using UnityEngine;
 
 public enum StateGame
 {
-    PLAY, GAMEOVER
+    STARTING, PLAY, GAMEOVER
 }
 
 public class GameManager : MonoBehaviour
 {
-    private StateGame state = StateGame.PLAY;
+    private StateGame state = StateGame.STARTING;
     public StateGame State { get { return state; } }
 
 
@@ -23,14 +23,27 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameOptions gameOptions;
     private void Awake()
     {
-        instance = this;
+        if( instance == null) instance = this;
+        if (instance != this) Destroy(this);
     }
 
     void Start()
     {
+        state = StateGame.STARTING;
         timer = gameOptions.timeSection;
-        StartCoroutine(CountTime());
     }
+
+    private void Update()
+    {
+        if (state == StateGame.STARTING && GameInput.Instance.SpaceIsPressed())
+        {
+            state = StateGame.PLAY;
+            StartCoroutine(CountTime());
+            UIController.Instance.DeactivateInstructions();
+
+        }
+    }
+
 
     private IEnumerator CountTime()
     {

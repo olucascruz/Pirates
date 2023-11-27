@@ -9,10 +9,7 @@ public class ShipPlayable : ShipController
 {
 
     private bool isMove = false;
-    [SerializeField] private GameObject TrippleCannon;
-
-
-
+   
     private void Update()
     {
         if (GameManager.Instance.State != StateGame.PLAY) return;
@@ -54,13 +51,19 @@ public class ShipPlayable : ShipController
 
         if (GameInput.Instance.JIsPressed() && canAttack && cannon != null)
         {
-            cannon.GetComponent<Cannon>().Shoot(damage, gameObject);
+            cannon.TryGetComponent(out Cannon cannonInstance);
+            if (cannonInstance != null) cannonInstance.Shoot(damage, gameObject);
             StartCoroutine(DelayAttack());
         }
 
         if (GameInput.Instance.KIsPressed() && canAttack)
         {
-            Cannon[] cannons = TrippleCannon.GetComponentsInChildren<Cannon>();
+            Transform trippleCannon = transform.Find("trippleCannon");
+
+            if (!trippleCannon) return;
+
+            Cannon[] cannons = trippleCannon.GetComponentsInChildren<Cannon>();
+            
             if (cannons[0] != null) { 
                 foreach (var _cannon in cannons)
                 {

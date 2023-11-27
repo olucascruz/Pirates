@@ -9,6 +9,8 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject canvasGameOver;
     [SerializeField] private TextMeshProUGUI feedbackTMP;
     [SerializeField] private TextMeshProUGUI pointsTMP;
+    [SerializeField] private GameObject canvasInstructions;
+
 
     [TextArea]
     [SerializeField] private string positiveFeedbackText;
@@ -29,9 +31,13 @@ public class UIController : MonoBehaviour
     void Start()
     {
         timerTMP.text = $"0";
+        canvasInstructions.SetActive(true);
     }
 
-   
+    public void DeactivateInstructions()
+    {
+        canvasInstructions.SetActive(false);
+    }
     public void UpdateTimerTMP(int seconds)
     {
         int minutes = Mathf.FloorToInt(seconds / 60);

@@ -8,7 +8,7 @@ public class ShipController : MonoBehaviour
     [SerializeField] protected float speedRotation;
     [SerializeField] protected float delayAttack;
     [SerializeField] protected int damage;
-    [SerializeField] protected GameObject cannon;
+    protected Transform cannon;
 
     public int Damage { get { return damage; } }
     protected bool canAttack = true;
@@ -22,8 +22,9 @@ public class ShipController : MonoBehaviour
 
     private void OnEnable()
     {
-        shipRigidbody = GetComponent<Rigidbody2D>();
-        shipHealth = GetComponent<ShipHealth>();
+        TryGetComponent(out shipRigidbody);
+        TryGetComponent(out shipHealth);
+        cannon = transform.Find("Cannon");
     }
 
 

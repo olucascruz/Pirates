@@ -18,8 +18,10 @@ public enum EnemyType
 }
 public class ShipEnemy : ShipController
 {
-    EnemyState state = EnemyState.CHASE;
-    [SerializeField] private EnemyType type;
+    
+    private EnemyState state = EnemyState.CHASE;
+    private EnemyType type;
+
     public EnemyType Type { get { return type; } }
     public EnemyState State { get { return state; } }
 
@@ -50,12 +52,15 @@ public class ShipEnemy : ShipController
         {
             StartCoroutine(Death());
         }
-        Behavior();
+        DefineStateMachine();
     }
-    public void Behavior()
+
+    public void DefineStateMachine()
     {
         if (GameManager.Instance.State != StateGame.PLAY) return;
-        GetComponent<BoxCollider2D>().enabled = canAttack;
+        TryGetComponent(out BoxCollider2D boxCollider);
+        if( boxCollider != null) boxCollider.enabled = canAttack;
+        
         Vector3 directionToPlayer = GetDirectionToPlayer();
         RaycastHit2D canSeeTarget;
 
@@ -77,7 +82,7 @@ public class ShipEnemy : ShipController
                 if (canAttack) Chase();
                 break;
             case EnemyState.AVOID:
-                ChoiceDirectionToAvoid();
+                DefineDirectionToAvoid();
                 if (dirToAvoid != Vector3.zero) Forward();
                 break;
 
@@ -90,7 +95,7 @@ public class ShipEnemy : ShipController
     }
 
 
-    private void ChoiceDirectionToAvoid()
+    private void DefineDirectionToAvoid()
     {
         CheckObstacles();
         LayerMask LayerToAvoid = LayerMask.GetMask("Obstacle") | LayerMask.GetMask("Limits");
@@ -172,7 +177,10 @@ public class ShipEnemy : ShipController
         }
         if (type == EnemyType.SHOTTER && cannon != null)
         {
-            cannon.GetComponent<Cannon>().Shoot(damage, gameObject);
+
+            cannon.TryGetComponent(out Cannon cannonInstance);
+            
+            if(cannonInstance != null) cannonInstance.Shoot(damage, gameObject);
         }
         StartCoroutine(DelayAttack());
 
@@ -274,8 +282,8 @@ public class ShipEnemy : ShipController
             state==EnemyState.ATTACK  &&
             type == EnemyType.CHASER)
         {
-            collision.gameObject.GetComponent<ShipHealth>().TakeDamage(Damage);
-
+            collision.gameObject.TryGetComponent(out ShipHealth shipHealthInstance);
+            if (shipHealthInstance != null) shipHealthInstance.TakeDamage(Damage);
         }
 
         if (collision.gameObject.tag == "Player" &&

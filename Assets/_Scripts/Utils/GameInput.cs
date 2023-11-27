@@ -35,4 +35,8 @@ public class GameInput : MonoBehaviour
 
     }
     
+    public bool SpaceIsPressed()
+    {
+        return Input.GetKeyDown(KeyCode.Space);
+    }
 }

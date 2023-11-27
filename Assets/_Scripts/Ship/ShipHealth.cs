@@ -28,6 +28,7 @@ public class ShipHealth : MonoBehaviour
         if (!isUnhittable) { 
             currentHealth -= damage;
             UpdateHealth();
+            StartCoroutine(DelayUnhittable());
         }
     }
     void UpdateHealth()
@@ -35,7 +36,7 @@ public class ShipHealth : MonoBehaviour
         if(healthBarImage)healthBarImage.fillAmount = GetHealthAsFraction();
     }
 
-    IEnumerator BeUnhittable()
+    IEnumerator DelayUnhittable()
     {
         isUnhittable = true;
         yield return new WaitForSeconds(1f);

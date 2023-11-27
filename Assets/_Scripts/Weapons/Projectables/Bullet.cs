@@ -2,12 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+
 public class Bullet : MonoBehaviour
 {
     [SerializeField] private float speed;
     private Rigidbody2D bulletRigidbody;
     private int damage;
     private GameObject originObj;
+
     public GameObject OriginObj { get { return originObj; } set { originObj = value; } }
     public int Damage { get { return damage; } set{ damage = value; } }
 
@@ -19,10 +22,11 @@ public class Bullet : MonoBehaviour
 
     private void OnEnable()
     {
-        animator = GetComponent<Animator>();
+        
+        TryGetComponent(out animator);
+        TryGetComponent(out bulletRigidbody);
         isHit = false;
         canExplode = false;
-        bulletRigidbody = GetComponent<Rigidbody2D>();
 
     }
 
@@ -31,7 +35,7 @@ public class Bullet : MonoBehaviour
         if (!isHit)
         { 
             Vector3 force = transform.up * speed;
-            if(bulletRigidbody)bulletRigidbody.AddForce(force, ForceMode2D.Force);
+            if(bulletRigidbody != null) bulletRigidbody.AddForce(force, ForceMode2D.Force);
         }
     }
 
@@ -58,11 +62,11 @@ public class Bullet : MonoBehaviour
     private IEnumerator ExplodeBullet(Collider2D collision)
     {
         isHit = true;  
-        bulletRigidbody.velocity = Vector2.zero;
-        animator.SetTrigger("isHit");
+        if(bulletRigidbody != null) bulletRigidbody.velocity = Vector2.zero;
+        if(animator != null) animator.SetTrigger("isHit");
         yield return new WaitForSeconds(.3f);
-        ShipHealth heath = collision.gameObject.GetComponent<ShipHealth>();
-        if (heath) heath.TakeDamage(damage);
+        TryGetComponent(out ShipHealth health);
+        if (health != null) health.TakeDamage(damage);
         gameObject.SetActive(false);
 
     }
