@@ -24,4 +24,15 @@ public class GameInput : MonoBehaviour
         float y = Input.GetAxis("Vertical");
         return new Vector2(x, y).normalized;
     }
+
+    public bool JIsPressed()
+    {
+        return Input.GetKeyDown(KeyCode.J);
+    }
+    public bool KIsPressed()
+    {
+        return Input.GetKeyDown(KeyCode.K);
+
+    }
+    
 }
