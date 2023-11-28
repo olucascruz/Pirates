@@ -1,45 +1,51 @@
 using System.Collections;
-using System.Collections.Generic;
 using Unity.VisualScripting;
-using System;
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.AI;
-using static UnityEngine.GraphicsBuffer;
 
-public enum EnemyState
-{
-    STARTING, CHASE, ATTACK, AVOID, DISTANCIATE
-}
-
-public enum EnemyType
-{
-    CHASER, SHOTTER
-}
+/**
+ * <summary>
+ * Class sets enemies by extending ship controller
+ * </summary>
+ */
 public class ShipEnemy : ShipController
 {
     
     private EnemyState state = EnemyState.CHASE;
-    private EnemyType type;
-
-    public EnemyType Type { get { return type; } }
-    public EnemyState State { get { return state; } }
 
     private bool isAvoiding;
     private Vector3 dirToAvoid = Vector3.zero;
+    [Header("Type")]
+    [SerializeField] private EnemyType type;
 
+    [Header("Distances to check to Avoid")]
+    [SerializeField] private float distanceToCheckSides = 3f;
+
+    [Header("Time")]
+    [SerializeField] private float timeToAvoid = 2f;
+    [SerializeField] private float timeToAvoidWhenHasObstacleOnTwoSides = 6f;
+
+    [Header("Chaser ship param")]
+    [SerializeField] private float speedMultipleForChaserAttack = 3f;
+
+    /// <summary>
+    /// Function that must be called by the enemy generator to execute the enemy's initial behavior
+    /// </summary>
     public void OnActivate()
     {
         state = EnemyState.STARTING;
         isDead = false;
         canMove = true;
         Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Limits"));
-        StartCoroutine(TimeStarting());
+        StartCoroutine(ChangeStartingStateToChaseState());
     }
 
-    private IEnumerator TimeStarting()
+    /// <summary>
+    /// Change initial state to chase state allowing enemy to collide with map boundaries 
+    /// </summary>
+    private IEnumerator ChangeStartingStateToChaseState()
     {
-        yield return new WaitForSeconds(1.8f);
+        float timeIgnoringLimts = 1.8f;
+        yield return new WaitForSeconds(timeIgnoringLimts);
         Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Limits"), false);
         state = EnemyState.CHASE;
     }
@@ -47,17 +53,18 @@ public class ShipEnemy : ShipController
 
     private void FixedUpdate()
     {
-        if (isDead) return;
         if (shipHealth.CurrentHealth <= 0 && !isDead)
         {
             StartCoroutine(Death());
         }
+        if (isDead) return;
+
         DefineStateMachine();
     }
 
     public void DefineStateMachine()
     {
-        if (GameManager.Instance.State != StateGame.PLAY) return;
+        if (GameManager.Instance.State != GameState.PLAY) return;
         TryGetComponent(out BoxCollider2D boxCollider);
         if( boxCollider != null) boxCollider.enabled = canAttack;
         
@@ -79,7 +86,11 @@ public class ShipEnemy : ShipController
 
             case EnemyState.CHASE:
                 canSeeTarget = LookToDirection(directionToPlayer);
-                if (canAttack) Chase();
+                if (canAttack)
+                {
+                    if (!CheckObstaclesForward()) Forward();
+                    if (CheckObstaclesForward()) state = EnemyState.AVOID;
+                }
                 break;
             case EnemyState.AVOID:
                 DefineDirectionToAvoid();
@@ -94,61 +105,50 @@ public class ShipEnemy : ShipController
 
     }
 
-
+    /// <summary>
+    /// Define direction to go to avoid obstacles using raycast
+    /// </summary>
     private void DefineDirectionToAvoid()
     {
-        CheckObstacles();
+        CheckObstaclesForward();
         LayerMask LayerToAvoid = LayerMask.GetMask("Obstacle") | LayerMask.GetMask("Limits");
-        RaycastHit2D hitRight = Physics2D.Raycast(transform.position, -transform.right, 3f, LayerToAvoid);
-        Debug.DrawRay(transform.position, -transform.right * 3f, Color.yellow);
+        RaycastHit2D hitRight = Physics2D.Raycast(transform.position, -transform.right, distanceToCheckSides, LayerToAvoid);
+        Debug.DrawRay(transform.position, -transform.right * distanceToCheckSides, Color.yellow);
 
-        RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, transform.right, 3f, LayerToAvoid);
-        Debug.DrawRay(transform.position, transform.right * 3f, Color.yellow);
+        RaycastHit2D hitLeft = Physics2D.Raycast(transform.position, transform.right, distanceToCheckSides, LayerToAvoid);
+        Debug.DrawRay(transform.position, transform.right * distanceToCheckSides, Color.yellow);
         if (!isAvoiding)
         {
             isAvoiding = true;
 
             if (!hitRight.collider && !hitLeft.collider)
             {
-                float distanceRigh = Vector3.Distance(transform.position + Vector3.right, GetPlayerPosition());
+                float distanceRight = Vector3.Distance(transform.position + Vector3.right, GetPlayerPosition());
                 float distanceLeft = Vector3.Distance(transform.position + (-Vector3.right), GetPlayerPosition());
 
-                if (distanceLeft < distanceRigh)
-                {
-                    dirToAvoid = -transform.right;
-                }
-                else
-                {
-                    dirToAvoid = transform.right;
-                }
-                StartCoroutine(TimeToAvoid(6f));
+                dirToAvoid = (distanceLeft < distanceRight) ? -transform.right : transform.right;
+                StartCoroutine(TimeToAvoid(timeToAvoidWhenHasObstacleOnTwoSides));
 
                 return;
             }
-            StartCoroutine(TimeToAvoid());
-
-
-            if (!hitRight.collider && hitLeft.collider)
+            else
             {
-                dirToAvoid = transform.right;
-                return;
-            }
-            if (!hitLeft.collider && hitRight.collider)
-            {
-                dirToAvoid = -transform.right;
-                return;
+                StartCoroutine(TimeToAvoid(timeToAvoid));
+
+                dirToAvoid = (hitRight.collider && !hitLeft.collider) ? -transform.right :
+                             (!hitRight.collider && hitLeft.collider) ? transform.right :
+                             (hitRight.collider && hitLeft.collider) ? -transform.up : dirToAvoid;
             }
 
-            if (hitRight.collider && hitRight.collider)
-            {
-                dirToAvoid = -transform.up;
-                return;
-            }
+            LookToDirection(dirToAvoid);
         }
-        LookToDirection(dirToAvoid);
     }
 
-    private IEnumerator TimeToAvoid(float time = 2f)
+    /// <summary>
+    /// Set the time the enemy spends trying to avoid obstacles before chasing the player again
+    /// </summary>
+    /// <param name="time">Time the enemy spends trying to avoid obstacles.</param>
+    private IEnumerator TimeToAvoid(float time)
     {
         yield return new WaitForSeconds(time);
         dirToAvoid = Vector3.zero;
@@ -157,18 +157,11 @@ public class ShipEnemy : ShipController
 
     }
 
-
-
-
-    private void Chase()
-    {
-        if(!CheckObstacles()) Forward();
-        if (CheckObstacles())
-        {
-            state = EnemyState.AVOID;
-        }
-       
-    }
+    /// <summary>
+    /// Attacks the player according to their attack type.
+    /// Shooter: Shoot on player direction.
+    /// Chaser: advances to collide with the player.
+    /// </summary>
     private void Attack()
     {
         if (type == EnemyType.CHASER)
@@ -188,9 +181,9 @@ public class ShipEnemy : ShipController
 
     private void ChaserAttack()
     {
-        ShipRigidbody.freezeRotation = true;
+        shipRigidbody.freezeRotation = true;
         Vector3 force = transform.up * speedMovement;
-        ShipRigidbody.AddForce(force * 3, ForceMode2D.Impulse);
+        shipRigidbody.AddForce(force * speedMultipleForChaserAttack, ForceMode2D.Impulse);
 
     }
     
@@ -220,6 +213,9 @@ public class ShipEnemy : ShipController
 
     }
 
+    /// <summary>
+    /// Looks in the specified direction by rotating its front and using a raycast to detect objects;
+    /// </summary>
     private RaycastHit2D LookToDirection(Vector3 direction)
     {
         
@@ -244,12 +240,22 @@ public class ShipEnemy : ShipController
         return hit;
     }
 
-    IEnumerator Death()
+
+    IEnumerator Death(bool countPoints = true)
     {
         isDead = true;
         canMove = false;
+
+        // When chaser colliding with player he dead.
+        // Does not cause effects to ships that have been defeated.
+        shipHealth.TakeDamage(shipHealth.CurrentHealth);
+
+        //Time to show death animation.
         yield return new WaitForSeconds(0.3f);
-        GameManager.Instance.AddPoint();
+
+        // When chaser colliding with player  he dead but not count points
+        if (countPoints) GameManager.Instance.AddPoint();
+
         gameObject.SetActive(false);
 
     }
@@ -264,13 +270,11 @@ public class ShipEnemy : ShipController
         
     }
 
-
-
     private void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.gameObject.tag == "Player")
         {
-            ShipRigidbody.freezeRotation = false;
+            shipRigidbody.freezeRotation = false;
             if(state == EnemyState.ATTACK) state = EnemyState.CHASE;
 
         }
@@ -279,21 +283,23 @@ public class ShipEnemy : ShipController
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.tag == "Player" &&
-            state==EnemyState.ATTACK  &&
+            state == EnemyState.ATTACK  &&
             type == EnemyType.CHASER)
         {
             collision.gameObject.TryGetComponent(out ShipHealth shipHealthInstance);
-            if (shipHealthInstance != null) shipHealthInstance.TakeDamage(Damage);
+            if (shipHealthInstance != null) shipHealthInstance.TakeDamage(damage);
+            StartCoroutine(Death(false));
         }
 
         if (collision.gameObject.tag == "Player" &&
-            state != EnemyState.ATTACK)
+            state != EnemyState.ATTACK &&
+            type != EnemyType.CHASER)
         {
-            StartCoroutine(StartDistanciateState());
+            StartCoroutine(StartDistanciateBehavior());
         }
     }
 
-    IEnumerator StartDistanciateState()
+    IEnumerator StartDistanciateBehavior()
     {
         yield return new WaitForSeconds(0.5f);
         state = EnemyState.DISTANCIATE;

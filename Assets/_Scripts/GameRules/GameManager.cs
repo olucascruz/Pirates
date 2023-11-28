@@ -4,40 +4,37 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-public enum StateGame
-{
-    STARTING, PLAY, GAMEOVER
-}
+
 
 public class GameManager : MonoBehaviour
 {
-    private StateGame state = StateGame.STARTING;
-    public StateGame State { get { return state; } }
-
-
+    private GameState state = GameState.STARTING;
+    public GameState State { get { return state; } }
     private int timer;
     private int points;
     private static GameManager instance;
     public static GameManager Instance { get { return instance; } }
 
+    [Header("scriptable object to define section time")]
     [SerializeField] private GameOptions gameOptions;
     private void Awake()
     {
+        //Define singleton
         if( instance == null) instance = this;
         if (instance != this) Destroy(this);
     }
 
     void Start()
     {
-        state = StateGame.STARTING;
+        state = GameState.STARTING;
         timer = gameOptions.timeSection;
     }
 
     private void Update()
     {
-        if (state == StateGame.STARTING && GameInput.Instance.SpaceIsPressed())
+        if (state == GameState.STARTING && GameInput.Instance.SpaceIsPressed())
         {
-            state = StateGame.PLAY;
+            state = GameState.PLAY;
             StartCoroutine(CountTime());
             UIController.Instance.DeactivateInstructions();
 
@@ -45,9 +42,12 @@ public class GameManager : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Counts the time played in the section.
+    /// </summary>
     private IEnumerator CountTime()
     {
-        while(timer >= 0 && state == StateGame.PLAY)
+        while(timer >= 0 && state == GameState.PLAY)
         {
             yield return new WaitForSecondsRealtime(1f);
             timer -= 1;
@@ -57,12 +57,16 @@ public class GameManager : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// End the game and call the function to open the game over panel
+    /// </summary>
     public void GameOver()
     {
-        state = StateGame.GAMEOVER;
+        state = GameState.GAMEOVER;
         GameInput.Instance.gameObject.SetActive(false);
         UIController.Instance.GameOverUI(timer <= 0, points);
     }
+
 
     public void AddPoint()
     {
