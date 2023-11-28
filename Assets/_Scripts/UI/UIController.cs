@@ -25,7 +25,9 @@ public class UIController : MonoBehaviour
 
     private void Awake()
     {
-        instance = this;
+        //Define singleton
+        if (instance == null) instance = this;
+        if (instance != this) Destroy(this);
     }
 
     void Start()
