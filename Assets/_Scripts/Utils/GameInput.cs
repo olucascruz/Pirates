@@ -2,6 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/// <summary>
+/// Class responsible for receiving Inputs
+/// </summary>
 public class GameInput : MonoBehaviour
 {
     private static GameInput instance;
@@ -9,17 +13,15 @@ public class GameInput : MonoBehaviour
 
     private void Awake()
     {
-        if(instance == null)
-        {
-            instance = this;
-        }else if(instance != this)
-        {
-            Destroy(gameObject);
-        }
+        //Define singleton
+        if (instance == null) instance = this;
+        if (instance != this) Destroy(this);
     }
 
     public Vector2 InputAxisNormalized()
     {
+        if (GameManager.Instance.State != GameState.PLAY) return Vector2.zero;
+
         float x = Input.GetAxis("Horizontal");
         float y = Input.GetAxis("Vertical");
         return new Vector2(x, y).normalized;
@@ -27,16 +29,21 @@ public class GameInput : MonoBehaviour
 
     public bool JIsPressed()
     {
+        if (GameManager.Instance.State != GameState.PLAY) return false;
+
         return Input.GetKeyDown(KeyCode.J);
     }
     public bool KIsPressed()
     {
+        if (GameManager.Instance.State != GameState.PLAY) return false;
+
         return Input.GetKeyDown(KeyCode.K);
 
     }
     
     public bool SpaceIsPressed()
     {
+        if (GameManager.Instance.State != GameState.STARTING) return false;
         return Input.GetKeyDown(KeyCode.Space);
     }
 }

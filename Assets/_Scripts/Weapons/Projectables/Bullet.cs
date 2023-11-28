@@ -11,8 +11,8 @@ public class Bullet : MonoBehaviour
     private int damage;
     private GameObject originObj;
 
-    public GameObject OriginObj { get { return originObj; } set { originObj = value; } }
-    public int Damage { get { return damage; } set{ damage = value; } }
+    public GameObject OriginObj { set { originObj = value; } }
+    public int Damage { set{ damage = value; } }
 
     private bool isHit = false;
     private bool canExplode = false;
@@ -39,9 +39,9 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerStay2D(Collider2D collision)
     {
-        if(collision.gameObject != originObj &&
+        if (collision.gameObject != originObj &&
             !isHit &&
             canExplode &&
             !collision.isTrigger)
@@ -52,6 +52,7 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
+        // If not colling with origin object can explode
         if (collision.gameObject == originObj)
         {
             canExplode = true;
@@ -65,8 +66,9 @@ public class Bullet : MonoBehaviour
         if(bulletRigidbody != null) bulletRigidbody.velocity = Vector2.zero;
         if(animator != null) animator.SetTrigger("isHit");
         yield return new WaitForSeconds(.3f);
-        TryGetComponent(out ShipHealth health);
+        collision.transform.TryGetComponent(out ShipHealth health);
         if (health != null) health.TakeDamage(damage);
+
         gameObject.SetActive(false);
 
     }

@@ -8,8 +8,8 @@ public class PoolingHandler : MonoBehaviour
     [SerializeField] private GameObject prefab;
     [SerializeField] private int maxObjects;
     private List<GameObject> pooledObjects;
-    private bool isOk = false;
-    public bool IsOk { get { return isOk; } }
+    private bool isFilled = false;
+    public bool IsFilled { get { return isFilled; } }
 
     void Start()
     {
@@ -21,7 +21,7 @@ public class PoolingHandler : MonoBehaviour
             instance.SetActive(false);
             pooledObjects.Add(instance);
         }
-        isOk = true;
+        isFilled = true;
     }
 
     public GameObject GetPooledObject()
