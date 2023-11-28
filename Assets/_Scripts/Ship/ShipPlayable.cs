@@ -4,7 +4,11 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-
+/**
+ * <summary>
+ * Class sets playable ship by extending ship controller
+ * </summary>
+ */
 public class ShipPlayable : ShipController
 {
 
@@ -12,15 +16,16 @@ public class ShipPlayable : ShipController
    
     private void Update()
     {
-        if (GameManager.Instance.State != StateGame.PLAY) return;
-
-        canMove = !CheckObstacles();
+        if (GameManager.Instance.State != GameState.PLAY) return;
+        
+        //Does not allow the player to force against the wall
+        canMove = !CheckObstaclesForward();
         
     }
 
     private void FixedUpdate()
     {
-        if (GameManager.Instance.State != StateGame.PLAY || isDead) return;
+        if (GameManager.Instance.State != GameState.PLAY || isDead) return;
 
         Behavior();
     }
@@ -35,18 +40,18 @@ public class ShipPlayable : ShipController
         }
         else
         {
-            ShipRigidbody.velocity = Vector2.zero;
+            shipRigidbody.velocity = Vector2.zero;
         }
 
         float rotateInput = GameInput.Instance.InputAxisNormalized().x;
         if (rotateInput != 0)
         {
-            ShipRigidbody.freezeRotation = false;
+            shipRigidbody.freezeRotation = false;
             Rotate(rotateInput);
         }
         else
         {
-            ShipRigidbody.freezeRotation = true;
+            shipRigidbody.freezeRotation = true;
         }
 
         if (GameInput.Instance.JIsPressed() && canAttack && cannon != null)
@@ -77,16 +82,13 @@ public class ShipPlayable : ShipController
     }
 
     
-
     private void Rotate(float deg)
     {
-        float rotation = ShipRigidbody.rotation;
+        float rotation = shipRigidbody.rotation;
         float _speedRotation = speedRotation;
         if (isMove) _speedRotation = speedRotation / 2;
-        ShipRigidbody.MoveRotation(rotation + (-deg * _speedRotation));
+        shipRigidbody.MoveRotation(rotation + (-deg * _speedRotation));
     }
-
-
 
     private void CheckDeath()
     {

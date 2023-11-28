@@ -15,27 +15,42 @@ public class ShipHealth : MonoBehaviour
 
     private void OnEnable()
     {
+        isUnhittable = false;
         currentHealth = maxHealth;
-        UpdateHealth();
+        UpdateHealthUI();
     }
+
+    /// <summary>
+    /// Get health as fraction to use on health UI slider 
+    /// </summary>
     public float GetHealthAsFraction()
     {
         return Mathf.Clamp01((float) currentHealth / maxHealth);
     }
 
+    /// <summary>
+    /// Updades health by decreasing the amount of damage taken
+    /// </summary>
     public void TakeDamage(int damage)
     {
         if (!isUnhittable) { 
             currentHealth -= damage;
-            UpdateHealth();
+            UpdateHealthUI();
             StartCoroutine(DelayUnhittable());
         }
     }
-    void UpdateHealth()
+
+    /// <summary>
+    /// Updades health UI slider
+    /// </summary>
+    void UpdateHealthUI()
     {
         if(healthBarImage)healthBarImage.fillAmount = GetHealthAsFraction();
     }
 
+    /// <summary>
+    /// Delay to take damage
+    /// </summary>
     IEnumerator DelayUnhittable()
     {
         isUnhittable = true;

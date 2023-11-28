@@ -2,22 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/**
+ * <summary>
+ * Class base to Ships
+ * </summary>
+ */
 public class ShipController : MonoBehaviour
 {
     [SerializeField] protected float speedMovement;
     [SerializeField] protected float speedRotation;
     [SerializeField] protected float delayAttack;
     [SerializeField] protected int damage;
-    protected Transform cannon;
+    [SerializeField] protected float distanceToCheckObstaclesForward;
 
-    public int Damage { get { return damage; } }
+    protected Transform cannon;
     protected bool canAttack = true;
     protected bool canMove = true;
     protected bool isDead = false;
 
-    private Rigidbody2D shipRigidbody;
-    protected Rigidbody2D ShipRigidbody { get { return shipRigidbody; } }
-
+    protected Rigidbody2D shipRigidbody;
     protected ShipHealth shipHealth;
 
     private void OnEnable()
@@ -27,7 +31,9 @@ public class ShipController : MonoBehaviour
         cannon = transform.Find("Cannon");
     }
 
-
+    /// <summary>
+    /// Move forward using AddForce
+    /// </summary>
     protected void Forward()
     {
         if (!canMove) return;
@@ -36,14 +42,21 @@ public class ShipController : MonoBehaviour
         if(shipRigidbody) shipRigidbody.AddForce(force, ForceMode2D.Force);
     }
 
-    protected bool CheckObstacles()
+
+    /// <summary>
+    /// Check Obstacles Forward using raycast
+    /// </summary>
+    protected bool CheckObstaclesForward()
     {
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.up, 1.2f, LayerMask.GetMask("Obstacle"));
-        Debug.DrawRay(transform.position, transform.up * 1.2f, Color.red);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.up, distanceToCheckObstaclesForward, LayerMask.GetMask("Obstacle"));
+        Debug.DrawRay(transform.position, transform.up * distanceToCheckObstaclesForward, Color.red);
 
         return hit.collider;
     }
 
+    /// <summary>
+    /// Create a delay between attacks
+    /// </summary>
     protected IEnumerator DelayAttack()
     {
         canAttack = false;
